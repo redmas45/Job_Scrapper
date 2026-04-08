@@ -9,7 +9,7 @@ def is_cv_question(query):
     keywords = [
         "cv", "resume", "my experience", "my skills",
         "i worked", "what did i", "sensor", "skills",
-        "experience", "technologies"
+        "experience", "technologies","Education", "projects","softskill"
     ]
     query = query.lower()
     return any(k in query for k in keywords)
