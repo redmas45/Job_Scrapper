@@ -1,0 +1,5 @@
+body { background:#0f172a; color:white; font-family:Arial; }
+.chat { width:600px; margin:auto; }
+#chat-box { height:400px; overflow:auto; background:#1e293b; padding:10px; }
+.user { background:#22c55e; margin:5px; padding:5px; text-align:right; }
+.bot { background:#334155; margin:5px; padding:5px; }

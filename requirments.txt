@@ -1,7 +1,0 @@
-requests
-beautifulsoup4
-pandas
-python-dotenv
-openai
-faiss-cpu
-tqdm

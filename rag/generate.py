@@ -1,22 +1,20 @@
 import requests
+from config import GROK_API_KEY
 from rag.read_cv import read_cv
-
-OLLAMA_URL = "http://localhost:11434/api/generate"
 
 
 def generate_answer(query, jobs, cv_choice="1"):
     cv_text = read_cv(cv_choice)
 
-    # 🧠 Build job context (if exists)
     if jobs:
         context = "\n\n".join([
-            f"{job['title']} at {job['company']} ({job['location']})"
+            f"{job['title']} at {job['company']} ({job['location']})\n{job.get('text','')}"
             for job in jobs
         ])
     else:
         context = "No job context"
 
-    # 🔥 STRONG PROMPT (anti-hallucination + routing)
+    # ✅ SAME PROMPT (UNCHANGED)
     prompt = f"""
 You are an AI assistant.
 
@@ -47,15 +45,25 @@ INSTRUCTIONS:
    - Use BOTH CV and job listings
    - Recommend only relevant jobs
    - Explain WHY they match CV
-
-3. Be precise and factual
-4. Avoid generic answers
 """
 
-    response = requests.post(OLLAMA_URL, json={
-        "model": "gemma4",   # you can switch to gemma later
-        "prompt": prompt,
-        "stream": False
-    })
+    # 🔥 GROK API CALL (OpenAI-compatible format)
+    response = requests.post(
+        "https://api.x.ai/v1/chat/completions",
+        headers={
+            "Authorization": f"Bearer {GROK_API_KEY}",
+            "Content-Type": "application/json"
+        },
+        json={
+            "model": "grok-beta",
+            "messages": [
+                {"role": "user", "content": prompt}
+            ],
+            "temperature": 0.3,
+            "max_tokens": 500
+        }
+    )
 
-    return response.json().get("response", "⚠️ No response from model")
+    data = response.json()
+
+    return data.get("choices", [{}])[0].get("message", {}).get("content", "No response")
