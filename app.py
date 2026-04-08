@@ -70,15 +70,6 @@ async def startup_event():
     print("=" * 60 + "\n")
 
 
-@app.get("/")
-def root():
-    return {
-        "status": "ok",
-        "message": "Job Scrapper API is running",
-        "endpoints": ["/health", "/ask"]
-    }
-
-
 @app.get("/health")
 def health_check():
     return {
@@ -123,7 +114,8 @@ if os.path.exists(frontend_path):
     app.mount("/static", StaticFiles(directory=frontend_path), name="static")
     print(f"✅ Mounted frontend at: {frontend_path}")
 
-# Serve index.html for root and all unknown routes
+
+# Serve index.html for root and all unknown routes (MUST BE LAST)
 @app.get("/{full_path:path}")
 async def serve_frontend(full_path: str):
     """Serve frontend files or fallback to index.html for SPA routing"""
@@ -131,12 +123,12 @@ async def serve_frontend(full_path: str):
     
     # If it's a file that exists, serve it
     if os.path.isfile(file_path):
-        return FileResponse(file_path)
+        return FileResponse(file_path, media_type="text/html" if full_path.endswith(".html") else None)
     
     # Otherwise, serve index.html for SPA routing
     index_path = os.path.join(frontend_path, "index.html")
     if os.path.isfile(index_path):
-        return FileResponse(index_path)
+        return FileResponse(index_path, media_type="text/html")
     
     return {"error": "Frontend not found"}
 
@@ -146,5 +138,9 @@ async def root():
     """Serve index.html at root"""
     index_path = os.path.join(frontend_path, "index.html")
     if os.path.isfile(index_path):
-        return FileResponse(index_path)
-    return {"status": "ok", "message": "API is running. Check /health or /ask"}
+        return FileResponse(index_path, media_type="text/html")
+    return {
+        "status": "ok",
+        "message": "Job Scrapper API is running",
+        "endpoints": ["/health", "/ask"]
+    }
