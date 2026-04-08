@@ -91,12 +91,3 @@ INSTRUCTIONS:
     except Exception as e:
         print(f"💥 Generate error: {type(e).__name__}: {e}")
         return f"❌ Error: {type(e).__name__}: {str(e)[:100]}"
-            ],
-            "temperature": 0.3,
-            "max_tokens": 500
-        }
-    )
-
-    data = response.json()
-
-    return data.get("choices", [{}])[0].get("message", {}).get("content", "No response")
