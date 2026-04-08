@@ -106,42 +106,55 @@ def ask(req: QueryRequest, x_api_key: str = Header(None)):
         return {"answer": f"❌ Error: {str(e)[:200]}"}
 
 
-# ===== SERVE FRONTEND =====
-
-# ===== SERVE FRONTEND =====
+# ===== SERVE FRONTEND (SPA) =====
 frontend_path = os.path.join(os.path.dirname(__file__), "frontend")
+if os.path.exists(frontend_path):
+    print(f"✅ Frontend path available: {frontend_path}")
+else:
+    print(f"⚠️ Frontend path NOT found: {frontend_path}")
+
 
 @app.get("/")
 async def root():
     """Serve index.html at root"""
-    index_path = os.path.join(frontend_path, "index.html")
-    if os.path.isfile(index_path):
-        return FileResponse(index_path, media_type="text/html")
-    return {"status": "ok", "message": "Job Scrapper API is running"}
+    try:
+        index_path = os.path.join(frontend_path, "index.html")
+        if os.path.isfile(index_path):
+            return FileResponse(index_path, media_type="text/html", headers={"Cache-Control": "no-cache"})
+        return {"status": "ok"}
+    except Exception as e:
+        print(f"❌ Root error: {e}")
+        return {"status": "ok"}
 
 
-# Mount static files directory
-if os.path.exists(frontend_path):
-    app.mount("/static", StaticFiles(directory=frontend_path), name="static")
-    print(f"✅ Mounted frontend at: {frontend_path}")
-
-
-# Serve other frontend files or fallback to index.html (MUST BE LAST)
+# Serve all other files (MUST BE LAST - catches everything not matched above)
 @app.get("/{full_path:path}")
-async def serve_frontend(full_path: str):
-    """Serve frontend files or fallback to index.html for SPA routing"""
-    file_path = os.path.join(frontend_path, full_path)
+async def serve_files(full_path: str):
+    """Serve frontend files or fallback to index.html"""
+    try:
+        file_path = os.path.join(frontend_path, full_path)
+        
+        # Security: prevent directory traversal
+        real_path = os.path.realpath(file_path)
+        real_frontend = os.path.realpath(frontend_path)
+        if not real_path.startswith(real_frontend):
+            return {"error": "Forbidden"}, 403
+        
+        # Serve the file if it exists
+        if os.path.isfile(file_path):
+            media = "text/html" if file_path.endswith(".html") else \
+                    "text/css" if file_path.endswith(".css") else \
+                    "application/javascript" if file_path.endswith(".js") else \
+                    "image/png" if file_path.endswith(".png") else \
+                    "application/json" if file_path.endswith(".json") else None
+            return FileResponse(file_path, media_type=media)
+        
+        # Fallback to index.html for SPA
+        index_path = os.path.join(frontend_path, "index.html")
+        if os.path.isfile(index_path):
+            return FileResponse(index_path, media_type="text/html")
+            
+    except Exception as e:
+        print(f"⚠️ Serve files error: {e}")
     
-    # If it's a file that exists, serve it
-    if os.path.isfile(file_path):
-        media = "text/html" if full_path.endswith(".html") else \
-                "text/css" if full_path.endswith(".css") else \
-                "application/javascript" if full_path.endswith(".js") else None
-        return FileResponse(file_path, media_type=media)
-    
-    # Otherwise, serve index.html for SPA routing
-    index_path = os.path.join(frontend_path, "index.html")
-    if os.path.isfile(index_path):
-        return FileResponse(index_path, media_type="text/html")
-    
-    return {"error": "Not found"}
+    return {"error": "Not found"}, 404
