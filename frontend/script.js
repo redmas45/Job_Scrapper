@@ -1,5 +1,5 @@
-// Fly.io deployment URL
-const API = "https://job-scrapper-xxxx.fly.dev";  // Replace xxxx with your actual URL
+// Railway deployment URL
+const API = "https://web-production-453db.up.railway.app";
 const TIMEOUT = 30000; // 30 seconds
 
 // Check if backend is alive

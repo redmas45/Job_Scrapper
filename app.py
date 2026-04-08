@@ -1,5 +1,7 @@
 from fastapi import FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 import os
 import sys
@@ -111,3 +113,38 @@ def ask(req: QueryRequest, x_api_key: str = Header(None)):
     except Exception as e:
         print(f"❌ Ask error: {e}")
         return {"answer": f"❌ Error: {str(e)[:200]}"}
+
+
+# ===== SERVE FRONTEND =====
+
+# Mount static files (CSS, JS, images)
+frontend_path = os.path.join(os.path.dirname(__file__), "frontend")
+if os.path.exists(frontend_path):
+    app.mount("/static", StaticFiles(directory=frontend_path), name="static")
+    print(f"✅ Mounted frontend at: {frontend_path}")
+
+# Serve index.html for root and all unknown routes
+@app.get("/{full_path:path}")
+async def serve_frontend(full_path: str):
+    """Serve frontend files or fallback to index.html for SPA routing"""
+    file_path = os.path.join(frontend_path, full_path)
+    
+    # If it's a file that exists, serve it
+    if os.path.isfile(file_path):
+        return FileResponse(file_path)
+    
+    # Otherwise, serve index.html for SPA routing
+    index_path = os.path.join(frontend_path, "index.html")
+    if os.path.isfile(index_path):
+        return FileResponse(index_path)
+    
+    return {"error": "Frontend not found"}
+
+
+@app.get("/")
+async def root():
+    """Serve index.html at root"""
+    index_path = os.path.join(frontend_path, "index.html")
+    if os.path.isfile(index_path):
+        return FileResponse(index_path)
+    return {"status": "ok", "message": "API is running. Check /health or /ask"}
