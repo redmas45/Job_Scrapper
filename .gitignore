@@ -1,11 +1,17 @@
-import os
+﻿# Environment variables
+.env
+.env.local
 
-# 🔐 Pinecone Config
-PINECONE_API_KEY = "pcsk_8wQAd_8PtcbuccftJdnpEzUvBj4i9HHD2KcHUeVK1THqgSHtki9YiC4MLWVm9Juc8Rhah"
-PINECONE_INDEX = "jobs-index"
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+env/
 
-# 🤖 Grok (XAI) Config
-GROK_API_KEY = "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"
+# IDE
+.vscode/
+.idea/
 
-# 🧠 Embedding Model
-EMBED_MODEL = "all-MiniLM-L6-v2"
+# OS
+.DS_Store
