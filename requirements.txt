@@ -4,3 +4,7 @@ pinecone
 sentence-transformers
 requests
 PyPDF2
+python-dotenv
+jobspy
+pandas
+faiss-cpu

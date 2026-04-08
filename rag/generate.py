@@ -4,18 +4,18 @@ from rag.read_cv import read_cv
 
 
 def generate_answer(query, jobs, cv_choice="1"):
-    cv_text = read_cv(cv_choice)
+    try:
+        cv_text = read_cv(cv_choice)
 
-    if jobs:
-        context = "\n\n".join([
-            f"{job['title']} at {job['company']} ({job['location']})\n{job.get('text','')}"
-            for job in jobs
-        ])
-    else:
-        context = "No job context"
+        if jobs:
+            context = "\n\n".join([
+                f"{job['title']} at {job['company']} ({job['location']})\n{job.get('text','')}"
+                for job in jobs
+            ])
+        else:
+            context = "No job context"
 
-    # ✅ SAME PROMPT (UNCHANGED)
-    prompt = f"""
+        prompt = f"""
 You are an AI assistant.
 
 You have access to the user's CV.
@@ -47,17 +47,50 @@ INSTRUCTIONS:
    - Explain WHY they match CV
 """
 
-    # 🔥 GROK API CALL (OpenAI-compatible format)
-    response = requests.post(
-        "https://api.x.ai/v1/chat/completions",
-        headers={
-            "Authorization": f"Bearer {GROK_API_KEY}",
-            "Content-Type": "application/json"
-        },
-        json={
-            "model": "grok-beta",
-            "messages": [
-                {"role": "user", "content": prompt}
+        print(f"🔥 Calling Grok API with query: {query[:50]}...")
+        print(f"🔑 API Key present: {bool(GROK_API_KEY)}")
+
+        # 🔥 GROK API CALL (OpenAI-compatible format)
+        response = requests.post(
+            "https://api.x.ai/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {GROK_API_KEY}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "model": "grok-beta",
+                "messages": [
+                    {"role": "user", "content": prompt}
+                ],
+                "temperature": 0.3,
+                "max_tokens": 500
+            },
+            timeout=30
+        )
+
+        print(f"📡 Grok API Status: {response.status_code}")
+
+        if response.status_code != 200:
+            print(f"❌ Grok API Error: {response.status_code}")
+            print(f"Response: {response.text}")
+            return f"Error from LLM: {response.status_code} - {response.text[:200]}"
+
+        data = response.json()
+        answer = data.get("choices", [{}])[0].get("message", {}).get("content", "")
+        
+        if not answer:
+            print(f"⚠️ No content in response: {data}")
+            return "Could not generate answer. Please try again."
+
+        return answer
+
+    except requests.exceptions.Timeout:
+        return "❌ Error: LLM API request timed out (>30s). Try again."
+    except requests.exceptions.ConnectionError:
+        return "❌ Error: Cannot connect to LLM API. Check internet connection."
+    except Exception as e:
+        print(f"💥 Generate error: {type(e).__name__}: {e}")
+        return f"❌ Error: {type(e).__name__}: {str(e)[:100]}"
             ],
             "temperature": 0.3,
             "max_tokens": 500
