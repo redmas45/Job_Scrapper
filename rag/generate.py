@@ -1,25 +1,33 @@
 import requests
+from rag.read_cv import read_cv
 
 OLLAMA_URL = "http://localhost:11434/api/generate"
 
-def generate_answer(query, jobs):
+
+def generate_answer(query, jobs, cv_choice="1"):
+    cv_text = read_cv(cv_choice)
+
     context = "\n\n".join([
-        f"{job['title']} at {job['company']} in {job['location']}"
+        f"{job['title']} at {job['company']} ({job['location']})"
         for job in jobs
     ])
 
     prompt = f"""
 You are an AI job assistant.
 
-User query: {query}
+User CV:
+{cv_text}
 
-Here are relevant jobs:
+User Query:
+{query}
+
+Jobs:
 {context}
 
 Task:
-- Recommend best jobs
-- Explain why they match
-- Keep answer short and clear
+1. Recommend top jobs based on CV
+2. Explain why they match skills
+3. Keep answer concise
 """
 
     response = requests.post(OLLAMA_URL, json={
