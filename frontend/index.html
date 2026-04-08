@@ -1,19 +1,24 @@
 <!DOCTYPE html>
 <html>
 <head>
-<link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🤖 AI Job Agent - Job Recommendations</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <div class="chat">
     <div id="chat-box"></div>
 
-    <input id="input" placeholder="Ask..." />
-    <select id="cv">
-        <option value="1">GenAI</option>
-        <option value="2">CV</option>
-    </select>
-    <button onclick="send()">Send</button>
+    <div class="input-container">
+        <input id="input" placeholder="Ask about jobs or your CV..." />
+        <select id="cv">
+            <option value="1">📄 GenAI CV</option>
+            <option value="2">🎯 CV Analysis</option>
+        </select>
+        <button onclick="send()">Send</button>
+    </div>
 </div>
 
 <script src="script.js"></script>

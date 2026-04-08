@@ -1,5 +1,205 @@
-body { background:#0f172a; color:white; font-family:Arial; }
-.chat { width:600px; margin:auto; }
-#chat-box { height:400px; overflow:auto; background:#1e293b; padding:10px; }
-.user { background:#22c55e; margin:5px; padding:5px; text-align:right; }
-.bot { background:#334155; margin:5px; padding:5px; }
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: linear-gradient(135deg, #0f172a 0%, #1a2f4f 100%);
+    color: #e2e8f0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.chat {
+    width: 100%;
+    max-width: 700px;
+    background: #1e293b;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    height: 90vh;
+    max-height: 600px;
+    overflow: hidden;
+}
+
+#chat-box {
+    flex: 1;
+    overflow-y: auto;
+    background: linear-gradient(to bottom, #0f172a, #1e293b);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.user {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    margin-left: auto;
+    margin-right: 0;
+    max-width: 80%;
+    padding: 12px 16px;
+    border-radius: 12px 0 12px 12px;
+    text-align: right;
+    word-wrap: break-word;
+    animation: slideInRight 0.3s ease;
+}
+
+.bot {
+    background: linear-gradient(135deg, #475569 0%, #334155 100%);
+    margin-right: auto;
+    margin-left: 0;
+    max-width: 80%;
+    padding: 12px 16px;
+    border-radius: 12px 12px 0 12px;
+    word-wrap: break-word;
+    animation: slideInLeft 0.3s ease;
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+#chat-box::-webkit-scrollbar {
+    width: 8px;
+}
+
+#chat-box::-webkit-scrollbar-track {
+    background: #0f172a;
+    border-radius: 10px;
+}
+
+#chat-box::-webkit-scrollbar-thumb {
+    background: #475569;
+    border-radius: 10px;
+}
+
+#chat-box::-webkit-scrollbar-thumb:hover {
+    background: #64748b;
+}
+
+.input-container {
+    display: flex;
+    gap: 10px;
+    padding: 16px;
+    background: #0f172a;
+    border-top: 1px solid #334155;
+}
+
+#input {
+    flex: 1;
+    padding: 12px 16px;
+    border: 2px solid #334155;
+    border-radius: 8px;
+    background: #1e293b;
+    color: #e2e8f0;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+#input:focus {
+    outline: none;
+    border-color: #10b981;
+    background: #334155;
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.2);
+}
+
+#input::placeholder {
+    color: #64748b;
+}
+
+#cv {
+    padding: 12px 12px;
+    border: 2px solid #334155;
+    border-radius: 8px;
+    background: #1e293b;
+    color: #e2e8f0;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    min-width: 120px;
+}
+
+#cv:hover {
+    border-color: #10b981;
+}
+
+#cv:focus {
+    outline: none;
+    border-color: #10b981;
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.2);
+}
+
+button {
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 14px;
+}
+
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(16, 185, 129, 0.3);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+/* Responsive design */
+@media (max-width: 600px) {
+    .chat {
+        max-height: calc(100vh - 20px);
+    }
+
+    .user,
+    .bot {
+        max-width: 95%;
+    }
+
+    #cv {
+        min-width: 100px;
+    }
+}
+
+/* Loading animation */
+.bot:has(> :contains('⏳')) {
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
