@@ -10,19 +10,32 @@ CV_MAP = {
 
 
 def read_cv(choice="1"):
-    path = CV_MAP.get(choice)
+    try:
+        path = CV_MAP.get(choice)
 
-    if not path or not os.path.exists(path):
-        print("⚠️ CV not found")
-        return ""
+        if not path:
+            print(f"⚠️ CV choice '{choice}' not found in CV_MAP")
+            return "CV not found"
 
-    reader = PdfReader(path)
+        if not os.path.exists(path):
+            print(f"⚠️ CV file not found at: {path}")
+            return f"CV file not found at {path}"
 
-    text = ""
-    for page in reader.pages:
-        try:
-            text += page.extract_text() + "\n"
-        except:
-            continue
+        reader = PdfReader(path)
 
-    return text[:3000]  # limit for LLM
+        text = ""
+        for page in reader.pages:
+            try:
+                text += page.extract_text() + "\n"
+            except Exception as e:
+                print(f"⚠️ Error reading page: {e}")
+                continue
+
+        if not text:
+            return "CV file is empty or unreadable"
+
+        return text[:3000]  # limit for LLM
+    
+    except Exception as e:
+        print(f"💥 CV Read Error: {e}")
+        return f"Error reading CV: {str(e)}"
