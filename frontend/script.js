@@ -1,5 +1,5 @@
-// Always use Render URL for production
-const API = "https://job-scrapper-0x72.onrender.com";
+// Fly.io deployment URL
+const API = "https://job-scrapper-xxxx.fly.dev";  // Replace xxxx with your actual URL
 const TIMEOUT = 30000; // 30 seconds
 
 // Check if backend is alive
