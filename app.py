@@ -108,30 +108,8 @@ def ask(req: QueryRequest, x_api_key: str = Header(None)):
 
 # ===== SERVE FRONTEND =====
 
-# Mount static files (CSS, JS, images)
+# ===== SERVE FRONTEND =====
 frontend_path = os.path.join(os.path.dirname(__file__), "frontend")
-if os.path.exists(frontend_path):
-    app.mount("/static", StaticFiles(directory=frontend_path), name="static")
-    print(f"✅ Mounted frontend at: {frontend_path}")
-
-
-# Serve index.html for root and all unknown routes (MUST BE LAST)
-@app.get("/{full_path:path}")
-async def serve_frontend(full_path: str):
-    """Serve frontend files or fallback to index.html for SPA routing"""
-    file_path = os.path.join(frontend_path, full_path)
-    
-    # If it's a file that exists, serve it
-    if os.path.isfile(file_path):
-        return FileResponse(file_path, media_type="text/html" if full_path.endswith(".html") else None)
-    
-    # Otherwise, serve index.html for SPA routing
-    index_path = os.path.join(frontend_path, "index.html")
-    if os.path.isfile(index_path):
-        return FileResponse(index_path, media_type="text/html")
-    
-    return {"error": "Frontend not found"}
-
 
 @app.get("/")
 async def root():
@@ -139,8 +117,31 @@ async def root():
     index_path = os.path.join(frontend_path, "index.html")
     if os.path.isfile(index_path):
         return FileResponse(index_path, media_type="text/html")
-    return {
-        "status": "ok",
-        "message": "Job Scrapper API is running",
-        "endpoints": ["/health", "/ask"]
-    }
+    return {"status": "ok", "message": "Job Scrapper API is running"}
+
+
+# Mount static files directory
+if os.path.exists(frontend_path):
+    app.mount("/static", StaticFiles(directory=frontend_path), name="static")
+    print(f"✅ Mounted frontend at: {frontend_path}")
+
+
+# Serve other frontend files or fallback to index.html (MUST BE LAST)
+@app.get("/{full_path:path}")
+async def serve_frontend(full_path: str):
+    """Serve frontend files or fallback to index.html for SPA routing"""
+    file_path = os.path.join(frontend_path, full_path)
+    
+    # If it's a file that exists, serve it
+    if os.path.isfile(file_path):
+        media = "text/html" if full_path.endswith(".html") else \
+                "text/css" if full_path.endswith(".css") else \
+                "application/javascript" if full_path.endswith(".js") else None
+        return FileResponse(file_path, media_type=media)
+    
+    # Otherwise, serve index.html for SPA routing
+    index_path = os.path.join(frontend_path, "index.html")
+    if os.path.isfile(index_path):
+        return FileResponse(index_path, media_type="text/html")
+    
+    return {"error": "Not found"}
