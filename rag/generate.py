@@ -52,17 +52,17 @@ INSTRUCTIONS:
 
         # 🔥 GROK API CALL (OpenAI-compatible format)
         response = requests.post(
-            "https://api.x.ai/v1/chat/completions",
+            "https://api.groq.com/openai/v1/chat/completions",
             headers={
                 "Authorization": f"Bearer {GROK_API_KEY}",
                 "Content-Type": "application/json"
             },
             json={
-                "model": "grok-beta",
+                "model": "llama3-8b-8192",
                 "messages": [
                     {"role": "user", "content": prompt}
                 ],
-                "temperature": 0.3,
+                "temperature": 0.4,
                 "max_tokens": 500
             },
             timeout=30
