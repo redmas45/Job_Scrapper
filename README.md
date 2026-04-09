@@ -107,6 +107,7 @@ PINECONE_API_KEY=your_key
 PINECONE_INDEX=jobs-index
 GROK_API_KEY=your_key
 API_KEY=mysecret123
+REQUIRE_API_KEY=false
 ```
 
 ---
@@ -151,6 +152,7 @@ PINECONE_API_KEY=pcsk_xxxxx
 PINECONE_INDEX=jobs-index
 GROK_API_KEY=gsk_xxxxx
 API_KEY=mysecret123
+REQUIRE_API_KEY=false
 ```
 
 ### Step 5: Deploy

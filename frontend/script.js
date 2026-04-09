@@ -1,5 +1,13 @@
-// Railway deployment URL
-const API = "https://web-production-95aec.up.railway.app";
+const API = (() => {
+    const host = window.location.hostname;
+
+    if (host === "localhost" || host === "127.0.0.1") {
+        return "http://127.0.0.1:8000";
+    }
+
+    return window.location.origin;
+})();
+
 const TIMEOUT = 30000; // 30 seconds
 
 // Check if backend is alive
@@ -38,8 +46,7 @@ async function send(){
         let res = await fetch(API + "/ask", {
             method: "POST",
             headers: {
-                "Content-Type": "application/json",
-                "x-api-key": "mysecret123"
+                "Content-Type": "application/json"
             },
             body: JSON.stringify({ query: q, cv: cv }),
             signal: controller.signal
@@ -48,7 +55,17 @@ async function send(){
         clearTimeout(timeout);
 
         if (!res.ok) {
-            throw new Error(`Server error: ${res.status} - ${res.statusText}`);
+            let detail = "";
+            const contentType = res.headers.get("content-type") || "";
+
+            if (contentType.includes("application/json")) {
+                const errorData = await res.json();
+                detail = errorData.detail || errorData.answer || "";
+            } else {
+                detail = (await res.text()).trim();
+            }
+
+            throw new Error(detail || `Server error: ${res.status}`);
         }
 
         let data = await res.json();

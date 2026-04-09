@@ -10,11 +10,12 @@ print("\n🔧 Initializing FastAPI app...\n")
 
 # Try to load each module with error handling
 try:
-    from config import API_KEY
+    from config import API_KEY, REQUIRE_API_KEY
     print("✅ Config loaded")
 except Exception as e:
     print(f"❌ FATAL: Config error: {e}")
     API_KEY = "mysecret123"
+    REQUIRE_API_KEY = False
 
 search = None
 generate_answer = None
@@ -63,6 +64,7 @@ async def startup_event():
     print("=" * 60)
     print(f"📁 Working directory: {os.getcwd()}")
     print(f"🔑 API Key configured: {bool(API_KEY)}")
+    print(f"🔐 API Key enforcement enabled: {REQUIRE_API_KEY}")
     print(f"📁 /embeddings exists: {os.path.exists('embeddings')}")
     print(f"📁 /data exists: {os.path.exists('data')}")
     print(f"🔍 Search available: {search is not None}")
@@ -83,7 +85,7 @@ def health_check():
 @app.post("/ask")
 def ask(req: QueryRequest, x_api_key: str = Header(None)):
     try:
-        if x_api_key != API_KEY:
+        if REQUIRE_API_KEY and x_api_key != API_KEY:
             raise HTTPException(status_code=401, detail="Invalid API key")
 
         if not generate_answer:
