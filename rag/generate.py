@@ -1,30 +1,28 @@
-from groq import Groq
+import requests
 from config import GROK_API_KEY
 
 
-client = Groq(api_key=GROK_API_KEY)
-
-
 def generate_response(query, jobs, cv_text):
-    # ================================
-    # 🔥 BUILD CONTEXT (FIXED LINKS)
-    # ================================
-    context = ""
+    try:
+        # ================================
+        # 🔥 BUILD CONTEXT (FIXED + STRONG)
+        # ================================
+        context = ""
 
-    for job in jobs:
-        link = job.get("link", "").strip()
+        for job in jobs:
+            link = (job.get("link") or "").strip()
 
-        # 🔥 Ensure clean link handling
-        if not link or link.lower() == "not available":
-            link_text = "Not available"
-        else:
-            link_text = link
+            # 🔥 Force valid link handling
+            if not link or link.lower() == "not available":
+                link_text = "Not available"
+            else:
+                link_text = link
 
-        context += f"""
+            context += f"""
 Title: {job.get('title', '')}
 Company: {job.get('company', '')}
 Location: {job.get('location', '')}
-Apply: {link_text}
+Apply Link: {link_text}
 
 Description:
 {job.get('text', '')}
@@ -32,10 +30,10 @@ Description:
 ---------------------
 """
 
-    # ================================
-    # 🔥 YOUR ORIGINAL PROMPT (UNCHANGED)
-    # ================================
-    prompt = f"""
+        # ================================
+        # 🔥 YOUR PROMPT (UNCHANGED)
+        # ================================
+        prompt = f"""
 You are a professional AI Job Assistant.
 
 Your job is to return CLEAN, WELL-FORMATTED answers.
@@ -62,6 +60,7 @@ STRICT RESPONSE RULES
 3. DO NOT use '*' or messy symbols
 4. Use clean bullet formatting
 5. Each job MUST be clearly separated
+6. ALWAYS show Apply link if provided
 
 --------------------
 
@@ -94,15 +93,36 @@ If no jobs found:
 Now generate the response.
 """
 
-    # ================================
-    # 🔥 CALL LLM
-    # ================================
-    response = client.chat.completions.create(
-        model="llama3-70b-8192",
-        messages=[
-            {"role": "user", "content": prompt}
-        ],
-        temperature=0.2
-    )
+        # ================================
+        # 🔥 CALL GROQ API
+        # ================================
+        response = requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {GROK_API_KEY}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "model": "llama-3.3-70b-versatile",
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": "Strictly follow formatting. Never skip Apply links if present."
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
+                "temperature": 0.2,
+                "max_tokens": 500
+            }
+        )
 
-    return response.choices[0].message.content
+        data = response.json()
+
+        # 🔥 Safe response handling
+        return data.get("choices", [{}])[0].get("message", {}).get("content", "No response")
+
+    except Exception as e:
+        return f"Error: {str(e)}"
