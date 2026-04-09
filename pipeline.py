@@ -1,96 +1,80 @@
-from data.save_jobs import save_jobs
-from embeddings.embed_jobs import build_index
-from embeddings.search_jobs import search
-from rag.generate import generate_answer
+import os
+from data.save_jobs import scrape_jobs
+from embeddings.embed_jobs import embed_and_upload
+from vector_db.pinecone_client import init_pinecone
+
+DB_PATH = "data/jobs.db"
 
 
-# 🧠 Detect if query is CV-related
-def is_cv_question(query):
-    keywords = [
-        "cv", "resume", "my experience", "my skills",
-        "i worked", "what did i", "sensor", "skills",
-        "experience", "technologies","Education", "projects","softskill"
-    ]
-    query = query.lower()
-    return any(k in query for k in keywords)
+def delete_old_db():
+    if os.path.exists(DB_PATH):
+        print("🧹 Deleting old SQLite database...")
+        os.remove(DB_PATH)
+        print("✅ Old database deleted\n")
+    else:
+        print("ℹ️ No existing database found\n")
 
 
 def run_pipeline():
-    print("""
-Choose mode:
-1 → Full pipeline (scrape + embed + search)
-2 → Fast mode (use existing DB + FAISS)
-3 → Only scrape
-4 → Only embed
-""")
+    print("🚀 Starting full pipeline...\n")
 
-    choice = input("Enter choice: ").strip()
+    # ================================
+    # 0. DELETE OLD DATABASE
+    # ================================
+    delete_old_db()
 
-    # 🔥 MODE 1: FULL
-    if choice == "1":
-        print("\n🔄 Step 1: Fetching jobs...")
-        save_jobs()
-
-        print("\n🔄 Step 2: Updating embeddings...")
-        build_index()
-
-    # ⚡ MODE 2: FAST
-    elif choice == "2":
-        print("\n⚡ Fast mode (using existing data)")
-
-    # 🧩 MODE 3: ONLY SCRAPE
-    elif choice == "3":
-        print("\n🔄 Scraping only...")
-        save_jobs()
+    # ================================
+    # 1. SCRAPE JOBS
+    # ================================
+    print("🔍 Step 1: Scraping jobs...")
+    try:
+        scrape_jobs()
+        print("✅ Jobs scraped and saved to NEW SQLite DB\n")
+    except Exception as e:
+        print(f"❌ Scraping failed: {e}")
         return
 
-    # 🧩 MODE 4: ONLY EMBED
-    elif choice == "4":
-        print("\n🔄 Embedding only...")
-        build_index()
+    # ================================
+    # 2. INIT PINECONE
+    # ================================
+    print("🧠 Step 2: Initializing Pinecone...")
+    index = init_pinecone()
+
+    if not index:
+        print("❌ Pinecone initialization failed")
         return
 
-    else:
-        print("❌ Invalid choice")
+    print("✅ Pinecone ready\n")
+
+    # ================================
+    # 3. CLEAR PINECONE
+    # ================================
+    print("🧹 Step 3: Clearing old vectors from Pinecone...")
+    try:
+        index.delete(delete_all=True)
+        print("✅ Pinecone cleared\n")
+    except Exception as e:
+        print(f"⚠️ Could not clear Pinecone: {e}")
+
+    # ================================
+    # 4. EMBED + UPLOAD
+    # ================================
+    print("📦 Step 4: Embedding & uploading jobs...")
+    try:
+        embed_and_upload()
+        print("✅ Pinecone updated successfully\n")
+    except Exception as e:
+        print(f"❌ Embedding failed: {e}")
         return
 
-    # 🧠 CV SELECTION
-    print("""
-Select CV:
-1 → CV 1 - GEN_AI
-2 → CV 2 - Computer Vision
-""")
-
-    cv_choice = input("Enter CV choice: ").strip()
-
-    # 💬 CHAT LOOP
-    print("\n💬 Enter queries (type 'exit' to quit)\n")
-
-    while True:
-        query = input("🔍 Query: ").strip()
-
-        if query.lower() in ["exit", "quit"]:
-            print("\n👋 Exiting...")
-            break
-
-        if not query:
-            continue
-
-        # 🧠 ROUTING LOGIC
-        if is_cv_question(query):
-            print("\n🧠 Answering from CV only...")
-            jobs = []  # 🚨 NO JOB CONTEXT
-        else:
-            print("\n🔄 Searching jobs...")
-            jobs = search(query)
-
-        print("\n🔄 Generating answer...")
-        answer = generate_answer(query, jobs, cv_choice)
-
-        print("\n💡 RESULT:\n")
-        print(answer)
-        print("\n" + "-"*50 + "\n")
+    # ================================
+    # DONE
+    # ================================
+    print("🎉 PIPELINE COMPLETED SUCCESSFULLY!")
 
 
+# ================================
+# ENTRY POINT
+# ================================
 if __name__ == "__main__":
     run_pipeline()
