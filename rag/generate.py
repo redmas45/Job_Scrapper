@@ -2,7 +2,7 @@ import requests
 from config import GROK_API_KEY
 
 
-def generate_response(query, jobs, cv_text):
+def generate_answer(query, jobs, cv_text):
     try:
         # ================================
         # 🔥 BUILD CONTEXT (UNCHANGED)
