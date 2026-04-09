@@ -5,14 +5,13 @@ from config import GROK_API_KEY
 def generate_response(query, jobs, cv_text):
     try:
         # ================================
-        # 🔥 BUILD CONTEXT (FIXED + STRONG)
+        # 🔥 BUILD CONTEXT (UNCHANGED)
         # ================================
         context = ""
 
         for job in jobs:
             link = (job.get("link") or "").strip()
 
-            # 🔥 Force valid link handling
             if not link or link.lower() == "not available":
                 link_text = "Not available"
             else:
@@ -22,7 +21,7 @@ def generate_response(query, jobs, cv_text):
 Title: {job.get('title', '')}
 Company: {job.get('company', '')}
 Location: {job.get('location', '')}
-Apply Link: {link_text}
+Apply: {link_text}
 
 Description:
 {job.get('text', '')}
@@ -31,7 +30,7 @@ Description:
 """
 
         # ================================
-        # 🔥 YOUR PROMPT (UNCHANGED)
+        # 🔥 PROMPT (UNCHANGED)
         # ================================
         prompt = f"""
 You are a professional AI Job Assistant.
@@ -60,7 +59,6 @@ STRICT RESPONSE RULES
 3. DO NOT use '*' or messy symbols
 4. Use clean bullet formatting
 5. Each job MUST be clearly separated
-6. ALWAYS show Apply link if provided
 
 --------------------
 
@@ -94,35 +92,58 @@ Now generate the response.
 """
 
         # ================================
-        # 🔥 CALL GROQ API
+        # 🔥 MODEL FALLBACK SYSTEM
         # ================================
-        response = requests.post(
-            "https://api.groq.com/openai/v1/chat/completions",
-            headers={
-                "Authorization": f"Bearer {GROK_API_KEY}",
-                "Content-Type": "application/json"
-            },
-            json={
-                "model": "llama-3.3-70b-versatile",
-                "messages": [
-                    {
-                        "role": "system",
-                        "content": "Strictly follow formatting. Never skip Apply links if present."
+        models = [
+            "llama-3.3-70b-versatile",
+            "llama3-70b-8192",
+            "llama-3.1-8b-instant",
+            "groq/compound",
+            "groq/compound-mini"
+        ]
+
+        for model in models:
+            try:
+                print(f"🔄 Trying model: {model}")
+
+                response = requests.post(
+                    "https://api.groq.com/openai/v1/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {GROK_API_KEY}",
+                        "Content-Type": "application/json"
                     },
-                    {
-                        "role": "user",
-                        "content": prompt
+                    json={
+                        "model": model,
+                        "messages": [
+                            {
+                                "role": "system",
+                                "content": "Strictly follow formatting. Never skip Apply links if present."
+                            },
+                            {
+                                "role": "user",
+                                "content": prompt
+                            }
+                        ],
+                        "temperature": 0.2,
+                        "max_tokens": 500
                     }
-                ],
-                "temperature": 0.2,
-                "max_tokens": 500
-            }
-        )
+                )
 
-        data = response.json()
+                data = response.json()
 
-        # 🔥 Safe response handling
-        return data.get("choices", [{}])[0].get("message", {}).get("content", "No response")
+                # ✅ Success condition
+                if "choices" in data:
+                    print(f"✅ Using model: {model}")
+                    return data["choices"][0]["message"]["content"]
+
+                else:
+                    print(f"⚠️ Model failed: {model} → {data}")
+
+            except Exception as e:
+                print(f"❌ Error with {model}: {e}")
+                continue
+
+        return "❌ All models failed"
 
     except Exception as e:
         return f"Error: {str(e)}"
