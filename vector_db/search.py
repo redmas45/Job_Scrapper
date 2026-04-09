@@ -1,36 +1,76 @@
 from sentence_transformers import SentenceTransformer
 from config import EMBED_MODEL
 from rag.read_cv import read_cv
+import re
 
 model = SentenceTransformer(EMBED_MODEL)
 
 # ================================
-# ⚠️ FAISS LOGIC (DISABLED)
+# 🔥 CONSTANTS
 # ================================
-# import faiss
-# import json
-# INDEX_PATH = "embeddings/faiss.index"
-# META_PATH = "embeddings/metadata.json"
-#
-# def _search_faiss(query, top_k=5):
-#     index = faiss.read_index(INDEX_PATH)
-#     with open(META_PATH, "r") as f:
-#         metadata = json.load(f)
-#
-#     query_vector = model.encode([query], normalize_embeddings=True)
-#     scores, indices = index.search(query_vector, top_k)
-#
-#     return [metadata[i] for i in indices[0]]
+ROLES = [
+    "Machine Learning Engineer",
+    "AI Engineer",
+    "Computer Vision Engineer",
+    "Generative AI Engineer",
+]
+
+LOCATIONS = [
+    "India",
+    "United States", "USA",
+    "United Kingdom", "UK",
+    "Germany", "Netherlands",
+    "Canada", "Australia", "Singapore"
+]
 
 # ================================
-# ✅ PINECONE SEARCH
+# 🔥 QUERY PARSER
 # ================================
+def parse_query(query):
+    query_lower = query.lower()
 
-def search(query, top_k=20, cv_choice="1"):
-    return _search_pinecone(query, top_k, cv_choice)
+    # Extract number (top_k)
+    k_match = re.search(r'\b(\d+)\b', query_lower)
+    top_k = int(k_match.group(1)) if k_match else 5
 
+    # Extract role
+    role = None
+    for r in ROLES:
+        if r.lower() in query_lower:
+            role = r
+            break
 
-def _search_pinecone(query, top_k=20, cv_choice="1"):
+    # Extract location
+    location = None
+    for loc in LOCATIONS:
+        if loc.lower() in query_lower:
+            location = loc
+            break
+
+    return {
+        "top_k": top_k,
+        "role": role,
+        "location": location
+    }
+
+# ================================
+# 🔥 FILTER BUILDER
+# ================================
+def build_filter(parsed):
+    filter_dict = {}
+
+    if parsed["location"]:
+        filter_dict["location"] = {"$in": [parsed["location"]]}
+
+    if parsed["role"]:
+        filter_dict["title"] = {"$in": [parsed["role"]]}
+
+    return filter_dict if filter_dict else None
+
+# ================================
+# 🔥 MAIN SEARCH
+# ================================
+def search(query, cv_choice="1"):
     try:
         from vector_db.pinecone_client import init_pinecone
 
@@ -38,6 +78,11 @@ def _search_pinecone(query, top_k=20, cv_choice="1"):
         if not index:
             return []
 
+        # 🔥 Parse query
+        parsed = parse_query(query)
+        filter_dict = build_filter(parsed)
+
+        # 🔥 CV-aware query
         cv_text = read_cv(cv_choice)
 
         enhanced_query = f"""
@@ -51,13 +96,15 @@ Find best matching jobs based on skills and experience.
 
         emb = model.encode(enhanced_query).tolist()
 
+        # 🔥 Query Pinecone
         res = index.query(
             vector=emb,
-            top_k=top_k,
-            include_metadata=True
+            top_k=50,
+            include_metadata=True,
+            filter=filter_dict
         )
 
-        # Deduplicate
+        # 🔥 Deduplicate
         seen = set()
         results = []
 
@@ -69,8 +116,8 @@ Find best matching jobs based on skills and experience.
                 seen.add(key)
                 results.append(meta)
 
-        return results[:5]
+        return results[:parsed["top_k"]]
 
     except Exception as e:
-        print(f"❌ Pinecone search error: {e}")
+        print(f"❌ Search error: {e}")
         return []

@@ -30,7 +30,6 @@ def embed_and_upload():
 
     vectors = []
 
-    # 🔥 Process jobs
     for job in tqdm(jobs, desc="🔄 Processing Jobs"):
         text = f"{job.get('title','')} {job.get('description','')}"
         chunks = chunk_text(text)
@@ -52,14 +51,10 @@ def embed_and_upload():
 
     print(f"\n🧠 Total chunks: {len(vectors)}")
 
-    # 🔥 Upload with safety
     batch_size = 100
-
     for i in tqdm(range(0, len(vectors), batch_size), desc="⬆️ Uploading"):
-        batch = vectors[i:i+batch_size]
-
         try:
-            index.upsert(vectors=batch)
+            index.upsert(vectors=vectors[i:i+batch_size])
         except Exception as e:
             print(f"⚠️ Batch failed at {i}: {e}")
 
