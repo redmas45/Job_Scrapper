@@ -411,7 +411,7 @@ Jobs older than 72 hours removed
 
 ---
 
-### 🔹 5. LLM (Ollama)
+### 🔹 5. LLM (Ollama) (local)
 
 * Default: `phi`
 * Optional:
@@ -458,53 +458,35 @@ Based on your computer vision experience:
 
 ---
 
-## 🚀 Future Improvements
+## 🔐 Security Notes
 
-* 📊 Job scoring system (CV match %)
-* 📧 Email automation (daily alerts)
-* 🌐 FastAPI backend
-* ☁️ Pinecone integration
-* 🐳 Docker deployment
-* 🖥️ UI (Streamlit / React)
+- Never commit `.env` to GitHub — use `.gitignore`
+- Change `API_KEY` from the default before deploying publicly
+- Store all secrets in Railway/Render environment variables
 
 ---
 
-## 🧠 Tech Stack
+## 🧱 Tech Stack
 
-| Component  | Technology           |
-| ---------- | -------------------- |
-| Scraping   | JobSpy               |
-| DB         | SQLite               |
-| Embeddings | SentenceTransformers |
-| Vector DB  | FAISS                |
-| LLM        | Ollama               |
-| Language   | Python               |
+| Layer | Technology |
+|-------|-----------|
+| Backend | FastAPI + Uvicorn |
+| LLM | Groq — LLaMA 3.3 70B Versatile |
+| Embeddings | sentence-transformers/all-distilroberta-v1 |
+| Vector DB | FAISS (local) / Pinecone (optional) |
+| Job Scraping | JobSpy |
+| Database | SQLite |
+| Frontend | Vanilla HTML/CSS/JS |
+| Hosting | Railway |
 
----
 
-## ⚠️ Limitations
+## 👤 Author
 
-* Scraping APIs are unstable
-* FAISS is local (not scalable)
-* CV parsing depends on PDF quality
-
----
-
-## 💡 Author
-
-**Rajiv Kumar**
+**Rajiv Kumar** — ML Engineer with focus on Computer Vision and Generative AI
 
 ---
 
-## ⭐ If you like this project
+## ⭐ If this helped you
 
-Give it a ⭐ on GitHub!
+Give it a star on GitHub — it helps others find the project!
 
----
-
-# 🔥 Final Thought
-
-```text
-This is not just a project.
-This is your personal AI job agent.
-```
