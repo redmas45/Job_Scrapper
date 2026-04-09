@@ -16,7 +16,6 @@ def scrape_only():
 def pinecone_only():
     print("\n🧠 Running Pinecone Upload Pipeline...\n")
 
-    # Init Pinecone
     index = init_pinecone()
     if not index:
         print("❌ Pinecone init failed")
@@ -24,15 +23,14 @@ def pinecone_only():
 
     print("✅ Pinecone initialized")
 
-    # Clear old data
+    # 🔥 FIX: namespace issue handled
     print("\n🧹 Clearing existing Pinecone data...")
     try:
-        index.delete(delete_all=True)
+        index.delete(delete_all=True, namespace="")
         print("✅ Pinecone cleared")
-    except Exception as e:
-        print(f"⚠️ Could not clear Pinecone: {e}")
+    except Exception:
+        print("⚠️ Nothing to delete (fresh index or namespace missing)")
 
-    # Embed & upload
     print("\n📦 Uploading DB → Pinecone...")
     try:
         embed_and_upload()

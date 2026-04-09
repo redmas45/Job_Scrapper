@@ -13,7 +13,7 @@ PINECONE_INDEX = os.getenv("PINECONE_INDEX", "jobs-index")
 GROK_API_KEY = os.getenv("GROK_API_KEY", "").strip()
 
 # 🧠 Embedding Model (using smaller distilroberta for faster loading)
-EMBED_MODEL = "sentence-transformers/all-distilroberta-v1"
+EMBED_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 
 # 🔑 API Security Key
 API_KEY = os.getenv("API_KEY", "change-me-in-production").strip()

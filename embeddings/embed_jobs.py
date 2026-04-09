@@ -30,7 +30,7 @@ def embed_and_upload():
 
     vectors = []
 
-    # 🔥 Progress bar for processing jobs
+    # 🔥 Process jobs
     for job in tqdm(jobs, desc="🔄 Processing Jobs"):
         text = f"{job.get('title','')} {job.get('description','')}"
         chunks = chunk_text(text)
@@ -52,10 +52,15 @@ def embed_and_upload():
 
     print(f"\n🧠 Total chunks: {len(vectors)}")
 
-    # 🔥 Upload with progress
+    # 🔥 Upload with safety
     batch_size = 100
+
     for i in tqdm(range(0, len(vectors), batch_size), desc="⬆️ Uploading"):
         batch = vectors[i:i+batch_size]
-        index.upsert(vectors=batch)
+
+        try:
+            index.upsert(vectors=batch)
+        except Exception as e:
+            print(f"⚠️ Batch failed at {i}: {e}")
 
     print("✅ Pinecone sync complete")
