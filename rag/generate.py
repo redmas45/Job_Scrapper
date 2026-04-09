@@ -5,6 +5,9 @@ from rag.read_cv import read_cv
 
 def generate_answer(query, jobs, cv_choice="1"):
     try:
+        if not GROK_API_KEY:
+            return "❌ Missing GROQ API key in server environment."
+
         # ================================
         # 🔥 READ CV
         # ================================
@@ -106,6 +109,8 @@ Now generate the response.
             "llama-3.1-8b-instant",
         ]
 
+        model_errors = []
+
         for model in models:
             try:
                 print(f"🔄 Trying model: {model}")
@@ -136,15 +141,32 @@ Now generate the response.
 
                 data = response.json()
 
-                if "choices" in data:
+                if response.ok and "choices" in data:
                     print(f"✅ Using model: {model}")
                     return data["choices"][0]["message"]["content"]
-                else:
-                    print(f"⚠️ Model failed: {model} → {data}")
+
+                error_message = ""
+                if isinstance(data, dict):
+                    error = data.get("error", {})
+                    if isinstance(error, dict):
+                        error_message = error.get("message", "")
+                    elif error:
+                        error_message = str(error)
+
+                if not error_message:
+                    error_message = str(data)[:300]
+
+                model_error = f"{model}: HTTP {response.status_code} - {error_message}"
+                print(f"⚠️ Model failed: {model_error}")
+                model_errors.append(model_error)
 
             except Exception as e:
                 print(f"❌ Error with {model}: {e}")
+                model_errors.append(f"{model}: {str(e)}")
                 continue
+
+        if model_errors:
+            return "❌ LLM provider error:\n" + "\n".join(model_errors[:3])
 
         return "❌ All models failed. Please try again."
 
