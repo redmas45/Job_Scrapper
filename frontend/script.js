@@ -1,5 +1,5 @@
 // Railway deployment URL
-const API = "https://web-production-c0217.up.railway.app/";
+const API = "https://web-production-c0217.up.railway.app";
 const TIMEOUT = 30000; // 30 seconds
 
 // Check if backend is alive
