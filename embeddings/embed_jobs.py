@@ -3,6 +3,7 @@ from config import EMBED_MODEL
 from data.db import fetch_all_jobs
 from vector_db.pinecone_client import init_pinecone
 import uuid
+from tqdm import tqdm
 
 model = SentenceTransformer(EMBED_MODEL)
 
@@ -13,7 +14,14 @@ def chunk_text(text, size=200):
 
 
 def embed_and_upload():
+    print("📦 Loading jobs from DB...")
     jobs = fetch_all_jobs()
+
+    if not jobs:
+        print("❌ No jobs found in DB")
+        return
+
+    print(f"✅ Found {len(jobs)} jobs")
 
     index = init_pinecone()
     if not index:
@@ -22,7 +30,8 @@ def embed_and_upload():
 
     vectors = []
 
-    for job in jobs:
+    # 🔥 Progress bar for processing jobs
+    for job in tqdm(jobs, desc="🔄 Processing Jobs"):
         text = f"{job.get('title','')} {job.get('description','')}"
         chunks = chunk_text(text)
 
@@ -41,9 +50,12 @@ def embed_and_upload():
                 }
             })
 
-    # Batch upload
-    batch_size = 100
-    for i in range(0, len(vectors), batch_size):
-        index.upsert(vectors=vectors[i:i+batch_size])
+    print(f"\n🧠 Total chunks: {len(vectors)}")
 
-    print(f"✅ Uploaded {len(vectors)} chunks to Pinecone")
+    # 🔥 Upload with progress
+    batch_size = 100
+    for i in tqdm(range(0, len(vectors), batch_size), desc="⬆️ Uploading"):
+        batch = vectors[i:i+batch_size]
+        index.upsert(vectors=batch)
+
+    print("✅ Pinecone sync complete")

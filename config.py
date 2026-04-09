@@ -8,6 +8,7 @@ load_dotenv()
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY", "").strip()
 PINECONE_INDEX = os.getenv("PINECONE_INDEX", "jobs-index")
 
+
 # 🤖 Grok (XAI) Config
 GROK_API_KEY = os.getenv("GROK_API_KEY", "").strip()
 
