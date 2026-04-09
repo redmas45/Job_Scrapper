@@ -13,6 +13,16 @@ def chunk_text(text, size=200):
     return [" ".join(words[i:i+size]) for i in range(0, len(words), size)]
 
 
+def clean_link(job):
+    # 🔥 Handles all cases
+    link = job.get("link") or job.get("url") or job.get("apply_link") or ""
+    
+    if not link or link.strip() == "":
+        return "Not available"
+    
+    return link.strip()
+
+
 def embed_and_upload():
     print("📦 Loading jobs from DB...")
     jobs = fetch_all_jobs()
@@ -34,6 +44,8 @@ def embed_and_upload():
         text = f"{job.get('title','')} {job.get('description','')}"
         chunks = chunk_text(text)
 
+        job_link = clean_link(job)  # 🔥 FIX
+
         for chunk in chunks:
             emb = model.encode(chunk).tolist()
 
@@ -44,7 +56,7 @@ def embed_and_upload():
                     "title": job.get("title", ""),
                     "company": job.get("company", ""),
                     "location": job.get("location", ""),
-                    "link": job.get("link", ""),
+                    "link": job_link,   # ✅ ALWAYS CLEAN
                     "text": chunk
                 }
             })

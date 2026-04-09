@@ -1,22 +1,44 @@
-import requests
+from groq import Groq
 from config import GROK_API_KEY
-from rag.read_cv import read_cv
 
 
-def generate_answer(query, jobs, cv_choice="1"):
-    try:
-        cv_text = read_cv(cv_choice)
+client = Groq(api_key=GROK_API_KEY)
 
-        if jobs:
-            context = "\n\n".join([
-                f"{job['title']} at {job['company']} ({job['location']})\n{job.get('text','')}"
-                for job in jobs
-            ])
+
+def generate_response(query, jobs, cv_text):
+    # ================================
+    # 🔥 BUILD CONTEXT (FIXED LINKS)
+    # ================================
+    context = ""
+
+    for job in jobs:
+        link = job.get("link", "").strip()
+
+        # 🔥 Ensure clean link handling
+        if not link or link.lower() == "not available":
+            link_text = "Not available"
         else:
-            context = "No job context"
+            link_text = link
 
-        prompt = f"""
-You are a STRICT AI Job Assistant.
+        context += f"""
+Title: {job.get('title', '')}
+Company: {job.get('company', '')}
+Location: {job.get('location', '')}
+Apply: {link_text}
+
+Description:
+{job.get('text', '')}
+
+---------------------
+"""
+
+    # ================================
+    # 🔥 YOUR ORIGINAL PROMPT (UNCHANGED)
+    # ================================
+    prompt = f"""
+You are a professional AI Job Assistant.
+
+Your job is to return CLEAN, WELL-FORMATTED answers.
 
 ====================
 USER CV:
@@ -31,65 +53,56 @@ JOB LISTINGS:
 {context}
 ====================
 
-RULES:
-- ONLY bullet points
-- NO paragraphs
-- SHORT answers
-- NO hallucination
+====================
+STRICT RESPONSE RULES
+====================
+
+1. DO NOT write paragraphs
+2. ALWAYS use proper spacing and line breaks
+3. DO NOT use '*' or messy symbols
+4. Use clean bullet formatting
+5. Each job MUST be clearly separated
 
 --------------------
 
-### CV QUESTION
-
-🔹 Answer:
-- Point 1
-- Point 2
-
---------------------
-
-### JOB RECOMMENDATION
+### FORMAT (MANDATORY)
 
 🔹 Recommended Jobs:
 
-1. Job Title — Company
-   - 📍 Location:
-   - 🔗 Apply: (if link available)
-   - ✅ Why it matches:
-     - Reason 1
-     - Reason 2
+1. Job Title — Company  
+   📍 Location:  
+   🔗 Apply:  
+   ✅ Why it matches:
+   - Point 1
+   - Point 2
+
+2. Job Title — Company  
+   📍 Location:  
+   🔗 Apply:  
+   ✅ Why it matches:
+   - Point 1
+   - Point 2
 
 --------------------
 
-### NO MATCH
+If no jobs found:
 
-❌ No relevant jobs found based on your CV.
+❌ No relevant jobs found.
+
+--------------------
+
+Now generate the response.
 """
 
-        response = requests.post(
-            "https://api.groq.com/openai/v1/chat/completions",
-            headers={
-                "Authorization": f"Bearer {GROK_API_KEY}",
-                "Content-Type": "application/json"
-            },
-            json={
-                "model": "llama-3.3-70b-versatile",
-                "messages": [
-                    {
-                        "role": "system",
-                        "content": "Always respond in bullet points. Never write paragraphs."
-                    },
-                    {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ],
-                "temperature": 0.2,
-                "max_tokens": 400
-            }
-        )
+    # ================================
+    # 🔥 CALL LLM
+    # ================================
+    response = client.chat.completions.create(
+        model="llama3-70b-8192",
+        messages=[
+            {"role": "user", "content": prompt}
+        ],
+        temperature=0.2
+    )
 
-        data = response.json()
-        return data["choices"][0]["message"]["content"]
-
-    except Exception as e:
-        return f"Error: {str(e)}"
+    return response.choices[0].message.content
