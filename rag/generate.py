@@ -58,7 +58,7 @@ INSTRUCTIONS:
                 "Content-Type": "application/json"
             },
             json={
-                "model": "model": "llama-3.3-70b-versatile",
+                "model": "llama-3.3-70b-versatile",
                 "messages": [
                     {"role": "user", "content": prompt}
                 ],
