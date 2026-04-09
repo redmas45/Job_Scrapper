@@ -1,11 +1,17 @@
 import requests
 from config import GROK_API_KEY
+from rag.read_cv import read_cv
 
 
-def generate_answer(query, jobs, cv_text):
+def generate_answer(query, jobs, cv_choice="1"):
     try:
         # ================================
-        # 🔥 BUILD CONTEXT (UNCHANGED)
+        # 🔥 READ CV
+        # ================================
+        cv_text = read_cv(cv_choice)
+
+        # ================================
+        # 🔥 BUILD CONTEXT
         # ================================
         context = ""
 
@@ -30,7 +36,7 @@ Description:
 """
 
         # ================================
-        # 🔥 PROMPT (UNCHANGED)
+        # 🔥 PROMPT
         # ================================
         prompt = f"""
 You are a professional AI Job Assistant.
@@ -98,8 +104,6 @@ Now generate the response.
             "llama-3.3-70b-versatile",
             "llama3-70b-8192",
             "llama-3.1-8b-instant",
-            "groq/compound",
-            "groq/compound-mini"
         ]
 
         for model in models:
@@ -126,16 +130,15 @@ Now generate the response.
                         ],
                         "temperature": 0.2,
                         "max_tokens": 500
-                    }
+                    },
+                    timeout=30
                 )
 
                 data = response.json()
 
-                # ✅ Success condition
                 if "choices" in data:
                     print(f"✅ Using model: {model}")
                     return data["choices"][0]["message"]["content"]
-
                 else:
                     print(f"⚠️ Model failed: {model} → {data}")
 
@@ -143,7 +146,7 @@ Now generate the response.
                 print(f"❌ Error with {model}: {e}")
                 continue
 
-        return "❌ All models failed"
+        return "❌ All models failed. Please try again."
 
     except Exception as e:
-        return f"Error: {str(e)}"
+        return f"❌ Error: {str(e)}"

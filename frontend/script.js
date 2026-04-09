@@ -6,8 +6,7 @@ const TIMEOUT = 30000; // 30 seconds
 async function checkBackendHealth() {
     try {
         const res = await fetch(API + "/health", {
-            method: "GET",
-            timeout: 5000
+            method: "GET"
         });
         return res.ok;
     } catch (e) {
@@ -25,15 +24,14 @@ async function send(){
     if (!q.trim()) return;
 
     chat.innerHTML += `<div class="user">${q}</div>`;
-    input.value="";
+    input.value = "";
 
     // Show loading indicator
     let loadingId = Date.now();
-    chat.innerHTML += `<div class="bot" id="loading-${loadingId}">⏳ Contacting server...</div>`;
+    chat.innerHTML += `<div class="bot" id="loading-${loadingId}">⏳ Thinking...</div>`;
     chat.scrollTop = chat.scrollHeight;
 
     try {
-        // Timeout mechanism
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), TIMEOUT);
 
@@ -43,7 +41,7 @@ async function send(){
                 "Content-Type": "application/json",
                 "x-api-key": "mysecret123"
             },
-            body: JSON.stringify({query: q, cv: cv}),
+            body: JSON.stringify({ query: q, cv: cv }),
             signal: controller.signal
         });
 
@@ -55,19 +53,19 @@ async function send(){
 
         let data = await res.json();
 
-        // Replace loading with actual answer
         let loadingEl = document.getElementById(`loading-${loadingId}`);
         if (loadingEl) {
             loadingEl.textContent = data.answer || "No response received";
         }
+
     } catch (error) {
         console.error("Error details:", error);
-        
+
         let errorMsg = "❌ Error: ";
         if (error.name === "AbortError") {
-            errorMsg += "Request timeout (server not responding)";
+            errorMsg += "Request timed out. Please try again.";
         } else if (error.message.includes("Failed to fetch")) {
-            errorMsg += "Cannot reach server. Check if Render is running.";
+            errorMsg += "Cannot reach server. Check if Railway is running.";
         } else {
             errorMsg += error.message;
         }
@@ -81,11 +79,15 @@ async function send(){
     chat.scrollTop = chat.scrollHeight;
 }
 
-// Check backend on page load
+// Allow Enter key to send
 document.addEventListener("DOMContentLoaded", async () => {
+    document.getElementById("input").addEventListener("keydown", function(e) {
+        if (e.key === "Enter") send();
+    });
+
     const isHealthy = await checkBackendHealth();
     if (!isHealthy) {
         const chat = document.getElementById("chat-box");
-        chat.innerHTML = `<div class="bot">⚠️ Warning: Backend server may not be responding. Make sure Render deployment is active.</div>`;
+        chat.innerHTML = `<div class="bot">⚠️ Warning: Backend server may not be responding.</div>`;
     }
 });
