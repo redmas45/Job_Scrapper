@@ -16,9 +16,7 @@ def generate_answer(query, jobs, cv_choice="1"):
             context = "No job context"
 
         prompt = f"""
-You are an AI assistant.
-
-You have access to the user's CV.
+You are a STRICT AI Job Assistant.
 
 ====================
 USER CV:
@@ -33,24 +31,40 @@ JOB LISTINGS:
 {context}
 ====================
 
-INSTRUCTIONS:
+RULES:
+- ONLY bullet points
+- NO paragraphs
+- SHORT answers
+- NO hallucination
 
-1. If the question is about the CV:
-   - Answer ONLY using CV
-   - DO NOT mention jobs
-   - DO NOT guess
-   - If not found → say "Not found in CV"
+--------------------
 
-2. If the question is about jobs:
-   - Use BOTH CV and job listings
-   - Recommend only relevant jobs
-   - Explain WHY they match CV
+### CV QUESTION
+
+🔹 Answer:
+- Point 1
+- Point 2
+
+--------------------
+
+### JOB RECOMMENDATION
+
+🔹 Recommended Jobs:
+
+1. Job Title — Company
+   - 📍 Location:
+   - 🔗 Apply: (if link available)
+   - ✅ Why it matches:
+     - Reason 1
+     - Reason 2
+
+--------------------
+
+### NO MATCH
+
+❌ No relevant jobs found based on your CV.
 """
 
-        print(f"🔥 Calling Grok API with query: {query[:50]}...")
-        print(f"🔑 API Key present: {bool(GROK_API_KEY)}")
-
-        # 🔥 GROK API CALL (OpenAI-compatible format)
         response = requests.post(
             "https://api.groq.com/openai/v1/chat/completions",
             headers={
@@ -60,34 +74,22 @@ INSTRUCTIONS:
             json={
                 "model": "llama-3.3-70b-versatile",
                 "messages": [
-                    {"role": "user", "content": prompt}
+                    {
+                        "role": "system",
+                        "content": "Always respond in bullet points. Never write paragraphs."
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
                 ],
-                "temperature": 0.4,
-                "max_tokens": 500
-            },
-            timeout=30
+                "temperature": 0.2,
+                "max_tokens": 400
+            }
         )
 
-        print(f"📡 Grok API Status: {response.status_code}")
-
-        if response.status_code != 200:
-            print(f"❌ Grok API Error: {response.status_code}")
-            print(f"Response: {response.text}")
-            return f"Error from LLM: {response.status_code} - {response.text[:200]}"
-
         data = response.json()
-        answer = data.get("choices", [{}])[0].get("message", {}).get("content", "")
-        
-        if not answer:
-            print(f"⚠️ No content in response: {data}")
-            return "Could not generate answer. Please try again."
+        return data["choices"][0]["message"]["content"]
 
-        return answer
-
-    except requests.exceptions.Timeout:
-        return "❌ Error: LLM API request timed out (>30s). Try again."
-    except requests.exceptions.ConnectionError:
-        return "❌ Error: Cannot connect to LLM API. Check internet connection."
     except Exception as e:
-        print(f"💥 Generate error: {type(e).__name__}: {e}")
-        return f"❌ Error: {type(e).__name__}: {str(e)[:100]}"
+        return f"Error: {str(e)}"
