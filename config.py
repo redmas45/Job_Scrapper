@@ -15,8 +15,9 @@ PINECONE_API_KEY = os.getenv("PINECONE_API_KEY", "").strip()
 PINECONE_INDEX = os.getenv("PINECONE_INDEX", "jobs-index")
 
 
-# 🤖 Grok (XAI) Config
-GROK_API_KEY = os.getenv("GROK_API_KEY", "").strip()
+# 🤖 Groq Config
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "").strip()
+GROK_API_KEY = GROQ_API_KEY or os.getenv("GROK_API_KEY", "").strip()
 
 # 🧠 Embedding Model (using smaller distilroberta for faster loading)
 EMBED_MODEL = "sentence-transformers/all-MiniLM-L6-v2"

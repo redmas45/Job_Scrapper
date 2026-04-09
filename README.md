@@ -105,7 +105,7 @@ pip install -r requirements.txt
 ```env
 PINECONE_API_KEY=your_key
 PINECONE_INDEX=jobs-index
-GROK_API_KEY=your_key
+GROQ_API_KEY=your_key
 API_KEY=mysecret123
 REQUIRE_API_KEY=false
 ```
@@ -150,7 +150,7 @@ uvicorn app:app --host 0.0.0.0 --port $PORT
 ```
 PINECONE_API_KEY=pcsk_xxxxx
 PINECONE_INDEX=jobs-index
-GROK_API_KEY=gsk_xxxxx
+GROQ_API_KEY=gsk_xxxxx
 API_KEY=mysecret123
 REQUIRE_API_KEY=false
 ```

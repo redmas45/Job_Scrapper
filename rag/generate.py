@@ -6,7 +6,7 @@ from rag.read_cv import read_cv
 def generate_answer(query, jobs, cv_choice="1"):
     try:
         if not GROK_API_KEY:
-            return "❌ Missing GROQ API key in server environment."
+            return "❌ Missing Groq API key in server environment."
 
         # ================================
         # 🔥 READ CV
@@ -105,8 +105,8 @@ Now generate the response.
         # ================================
         models = [
             "llama-3.3-70b-versatile",
-            "llama3-70b-8192",
             "llama-3.1-8b-instant",
+            "openai/gpt-oss-20b",
         ]
 
         model_errors = []

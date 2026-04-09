@@ -10,12 +10,14 @@ print("\n🔧 Initializing FastAPI app...\n")
 
 # Try to load each module with error handling
 try:
-    from config import API_KEY, REQUIRE_API_KEY
+    from config import API_KEY, REQUIRE_API_KEY, GROK_API_KEY, PINECONE_API_KEY
     print("✅ Config loaded")
 except Exception as e:
     print(f"❌ FATAL: Config error: {e}")
     API_KEY = "mysecret123"
     REQUIRE_API_KEY = False
+    GROK_API_KEY = ""
+    PINECONE_API_KEY = ""
 
 search = None
 generate_answer = None
@@ -65,6 +67,8 @@ async def startup_event():
     print(f"📁 Working directory: {os.getcwd()}")
     print(f"🔑 API Key configured: {bool(API_KEY)}")
     print(f"🔐 API Key enforcement enabled: {REQUIRE_API_KEY}")
+    print(f"🤖 Groq key configured: {bool(GROK_API_KEY)}")
+    print(f"🧠 Pinecone key configured: {bool(PINECONE_API_KEY)}")
     print(f"📁 /embeddings exists: {os.path.exists('embeddings')}")
     print(f"📁 /data exists: {os.path.exists('data')}")
     print(f"🔍 Search available: {search is not None}")

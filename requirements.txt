@@ -1,6 +1,6 @@
 fastapi
 uvicorn[standard]
-pinecone-client
+pinecone
 sentence-transformers
 torch
 transformers
